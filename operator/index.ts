@@ -117,7 +117,7 @@ const contractMessageBuilder = async (contract: string) => {
     const sourceCode = await getContractSourceCode(contract)
     contractCode = sourceCode.isVerified ? sourceCode.sourceCode : ``
     return `
-      please Analyze Contract source code for potential phishing indicators. Here are the details of the contract you need to analyze:
+      here's the smartcontract source code for the contract address ${contract}:
       <contract_source_code>
       ${contract}
       </contract_source_code>
@@ -142,6 +142,8 @@ Debug trace call result:
 <debug_trace_call>
 ${data}
 </debug_trace_call>
+
+${contractMessageBuilder(task.to)}
 
 Please analyze this transaction carefully and determine if it's safe or potentially a phishing attempt. Follow these steps in your analysis:
 
