@@ -5,7 +5,7 @@ interface IHelloWorldServiceManager {
     event NewTaskCreated(uint32 indexed taskIndex, Task task);
 
     event TaskResponded(uint32 indexed taskIndex, Task task, address operator);
-    event Transaction(uint32 indexed taskIndex, address indexed from, address indexed to, uint256 value, bytes data, bytes message, bool status);
+    event Transaction(uint32 indexed taskIndex, address indexed from, address indexed to, uint256 value, bytes data, bytes4 functionName, bool status);
     struct Task {
         uint32 taskCreatedBlock;
         address from;
@@ -13,7 +13,8 @@ interface IHelloWorldServiceManager {
         bytes data;
         uint256 value;
     }
-
+    function serviceOwner() external view returns (address);
+    function safeGuard() external view returns (address);
     function latestTaskNum() external view returns (uint32);
 
     function allTaskHashes(
@@ -37,6 +38,6 @@ interface IHelloWorldServiceManager {
         uint32 referenceTaskIndex,
         bytes memory signature,
         bool isSafe,
-        bytes memory causeHash
+        bytes4 functionName
     ) external;
 }

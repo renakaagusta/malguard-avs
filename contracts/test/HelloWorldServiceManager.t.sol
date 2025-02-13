@@ -385,9 +385,9 @@ contract CreateTask is HelloWorldTaskManagerSetup {
         newTask.value = 0;
 
         vm.prank(generator.key.addr);
-        IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(newTask.from, newTask.to, newTask.data, newTask.value);
+        IHelloWorldServiceManager.Task memory newTaskReturn = sm.createNewTask(newTask.from, newTask.to, newTask.data, newTask.value);
 
-        require(sha256(abi.encodePacked(newTask.from, newTask.to, newTask.data, newTask.value)) == sha256(abi.encodePacked(newTask.from, newTask.to, newTask.data, newTask.value)), "Task name not set correctly");
+        require(sha256(abi.encodePacked(newTaskReturn.from, newTaskReturn.to, newTaskReturn.data, newTaskReturn.value)) == sha256(abi.encodePacked(newTask.from, newTask.to, newTask.data, newTask.value)), "Task name not set correctly");
         require(newTask.taskCreatedBlock == uint32(block.number), "Task created block not set correctly");
     }
 }
@@ -435,12 +435,12 @@ contract RespondToTask is HelloWorldTaskManagerSetup {
         newTask.to = owner.key.addr;
         newTask.data = "";
         newTask.value = 0;
-        IHelloWorldServiceManager.Task memory newTask = sm.createNewTask(
+        IHelloWorldServiceManager.Task memory newTaskStore = sm.createNewTask(
             newTask.from, newTask.to, newTask.data, newTask.value
         );
         uint32 taskIndex = sm.latestTaskNum() - 1;
 
-        bytes32 messageHash = keccak256(abi.encodePacked(newTask.from, newTask.to, newTask.data, newTask.value));
+        bytes32 messageHash = keccak256(abi.encodePacked(newTaskStore.from, newTaskStore.to, newTaskStore.data, newTaskStore.value));
         bytes32 ethSignedMessageHash = messageHash.toEthSignedMessageHash();
         bytes memory signature = signWithSigningKey(operators[0], ethSignedMessageHash); // TODO: Use signing key after changes to service manager
 

@@ -446,9 +446,9 @@
         "internalType": "bool"
       },
       {
-        "name": "causeHash",
-        "type": "bytes",
-        "internalType": "bytes"
+        "name": "functionName",
+        "type": "bytes4",
+        "internalType": "bytes4"
       }
     ],
     "outputs": [],
@@ -457,6 +457,32 @@
   {
     "type": "function",
     "name": "rewardsInitiator",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "safeGuard",
+    "inputs": [],
+    "outputs": [
+      {
+        "name": "",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "stateMutability": "view"
+  },
+  {
+    "type": "function",
+    "name": "serviceOwner",
     "inputs": [],
     "outputs": [
       {
@@ -486,6 +512,19 @@
     "inputs": [
       {
         "name": "newRewardsInitiator",
+        "type": "address",
+        "internalType": "address"
+      }
+    ],
+    "outputs": [],
+    "stateMutability": "nonpayable"
+  },
+  {
+    "type": "function",
+    "name": "setSafeGuard",
+    "inputs": [
+      {
+        "name": "_safeGuard",
         "type": "address",
         "internalType": "address"
       }
@@ -716,10 +755,10 @@
         "internalType": "bytes"
       },
       {
-        "name": "message",
-        "type": "bytes",
+        "name": "functionName",
+        "type": "bytes4",
         "indexed": false,
-        "internalType": "bytes"
+        "internalType": "bytes4"
       },
       {
         "name": "status",

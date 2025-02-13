@@ -1,6 +1,7 @@
 import { ethers } from 'ethers'
 import * as dotenv from 'dotenv'
 import OpenAI from "openai";
+import { getContractSourceCode } from './scan';
 const fs = require('fs')
 const path = require('path')
 dotenv.config()
@@ -19,7 +20,9 @@ if (!Object.keys(process.env).length) {
 const provider = new ethers.JsonRpcProvider(process.env.RPC_URL)
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider)
 /// TODO: Hack
-let chainId = 31337
+// let chainId = 31337;
+// arbitrum sepolia chain id
+let chainId = 421614;
 // let chainId = 911867;
 
 const avsDeploymentData = JSON.parse(
@@ -49,6 +52,11 @@ interface Task {
   value: string
 }
 
+
+const getFunctionNameByData = async (data: string) => {
+    return data.slice(0,10);
+}
+
 const signAndRespondToTask = async (taskIndex: number, task: Task) => {
   const messageHash = ethers.solidityPackedKeccak256(
     ['address', 'address', 'bytes', 'uint256'],
@@ -67,25 +75,24 @@ const signAndRespondToTask = async (taskIndex: number, task: Task) => {
     'latest'
   ])
   const { isSafe, cause } = await getAiAnalysis(JSON.stringify(debugData), task)
-
+  console.log(isSafe, cause)
   const operators = [await wallet.getAddress()]
   const signatures = [signature]
   const signedTask = ethers.AbiCoder.defaultAbiCoder().encode(
     ['address[]', 'bytes[]', 'uint32'],
     [operators, signatures, ethers.toBigInt((await provider.getBlockNumber()) - 1)]
   )
-  const causeBytes = ethers.AbiCoder.defaultAbiCoder().encode(['string'], [cause])
   try {
     const tx = await helloWorldServiceManager.respondToTask(
       [task.createdBlock, task.from, task.to, task.data, task.value],
       taskIndex,
       signedTask,
       isSafe,
-      causeBytes,
+      task.data === '0x' ? '0x' : getFunctionNameByData(task.data),
       { gasLimit: 2000000 }
     )
     await tx.wait()
-    console.log(`Responded to task with hash : ${tx.hash}.`)
+    console.log(`Responded to task with hash : ${tx.hash}`)
   } catch (err: any) {
     console.log(`Error : ${err.message}`)
   }
@@ -106,11 +113,25 @@ const monitorNewTasks = async () => {
   console.log('Monitoring for new tasks...')
 }
 
-const getAiAnalysis = async (data: string, task: Task) => {
-  let isSafe: boolean = false
-  let analysis: string = 'Analysis not available'
-  try {
-    const message = `
+const contractMessageBuilder = async (contract: string) => {
+    return `
+    please Analyze Contract source code for potential phishing indicators. Here are the details of the contract you need to analyze:
+    <contract_source_code>
+    ${contract}
+    </contract_source_code>
+    `
+}
+
+const messageBuilder = async (data: string, task: Task) => {
+    let contract = ``
+    try {
+        const sourceCode = await getContractSourceCode(task.to)
+        contract = sourceCode.isVerified ? sourceCode.sourceCode : ``
+    }catch (err: any){
+        console.log(`Error : ${err.message}`)
+    }
+
+    return `
 You are an expert Ethereum security analyst with extensive knowledge of phishing transaction patterns and Solidity code. Your task is to analyze a given transaction and determine if it's potentially a phishing attempt or safe.
 
 Here are the details of the transaction you need to analyze:
@@ -148,17 +169,14 @@ d. Summarize your findings before making a final determination.
 
 It's okay for this section to be quite long to ensure a thorough analysis. Consider multiple factors and potential false positives to ensure accurate detection.
 
-After your analysis, provide your conclusion in the following json format:
-{
-  "safe": boolean,
-  "cause": string
+Remember, accuracy is crucial in detecting phishing transactions. Take into account all available information and potential legitimate scenarios before making your final determination.
+    `
 }
 
-The "cause" string should explain your conclusion in no more than 280 characters. No additional text just the json response only.
-
-Remember, accuracy is crucial in detecting phishing transactions. Take into account all available information and potential legitimate scenarios before making your final determination.
-        `
-
+const getAiAnalysis = async (data: string, task: Task) => {
+  let isSafe: boolean = false
+  let analysis: string = 'Analysis not available'
+  try {
     const response = await openai.chat.completions.create({
       model: 'gpt-4o',
       messages: [
@@ -176,7 +194,7 @@ Remember, accuracy is crucial in detecting phishing transactions. Take into acco
             content: [
               {
                 type: 'text',
-                text: message
+                text: await messageBuilder(data, task)
               }
             ]
         }
@@ -207,11 +225,16 @@ Remember, accuracy is crucial in detecting phishing transactions. Take into acco
       max_completion_tokens: 2048,
       top_p: 1,
       frequency_penalty: 0,
-      presence_penalty: 0
+      presence_penalty: 0,
+      // // @ts-expect-error Venice.ai paramters are unique to Venice.
+      // this param is for venice.ai, currently we just mock it use other agent.
+      // venice_parameters: {
+      //   include_venice_system_prompt: false,
+      // },
     })
-    console.log(JSON.stringify(response));
-    // isSafe = responseJSON.safe
-    // analysis = responseJSON.cause
+    const responseJSON = JSON.parse(response.choices[0].message.content ?? `{ safe: false, cause: 'Analysis not available' }`);
+    isSafe = responseJSON.safe
+    analysis = responseJSON.cause
   } catch (err: any) {
     console.log(`Error : ${err.message}`)
   }

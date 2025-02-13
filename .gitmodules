@@ -4,6 +4,3 @@
 [submodule "contracts/lib/eigenlayer-middleware"]
 	path = contracts/lib/eigenlayer-middleware
 	url = https://github.com/Layr-Labs/eigenlayer-middleware
-[submodule "contracts/lib/safe-smart-account"]
-	path = contracts/lib/safe-smart-account
-	url = https://github.com/safe-global/safe-smart-account

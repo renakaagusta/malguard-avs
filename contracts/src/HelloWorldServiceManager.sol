@@ -22,6 +22,8 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
     using ECDSAUpgradeable for bytes32;
 
     uint32 public latestTaskNum;
+    address public safeGuard;
+    address public serviceOwner;
 
     // mapping of task indices to all tasks hashes
     // when a task is created, task hash is stored here,
@@ -39,6 +41,10 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         );
         _;
     }
+    modifier justOwner() {
+        require(msg.sender == serviceOwner, "Owner must be the caller");
+        _;
+    }
 
     constructor(
         address _avsDirectory,
@@ -53,13 +59,18 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
             _rewardsCoordinator,
             _delegationManager
         )
-    {}
+        
+    { serviceOwner = msg.sender;}
 
     function initialize(
         address initialOwner,
         address _rewardsInitiator
     ) external initializer {
         __ServiceManagerBase_init(initialOwner, _rewardsInitiator);
+    }
+
+    function setSafeGuard(address _safeGuard) external justOwner {
+        safeGuard = _safeGuard;
     }
 
     /* FUNCTIONS */
@@ -91,7 +102,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         uint32 referenceTaskIndex,
         bytes memory signature,
         bool isSafe,
-        bytes memory causeHash
+        bytes4 functionName
     ) external {
         // check that the task is valid, hasn't been responsed yet, and is being responded in time
         require(
@@ -115,12 +126,13 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         allTaskResponses[msg.sender][referenceTaskIndex] = signature;
 
         if(isSafe){
-            ISmartAccount(task.from).executeSingle(task.data, task.to, task.value);
+            // ISmartAccount(task.from).executeSingle(task.data, task.to, task.value);
+            ISafeGuard(safeGuard).allowFunction(task.to, functionName);
         }
 
         // emitting event
         emit TaskResponded(referenceTaskIndex, task, msg.sender);
-        emit Transaction(referenceTaskIndex, task.from, task.to , task.value, task.data, causeHash, isSafe);
+        emit Transaction(referenceTaskIndex, task.from, task.to , task.value, task.data, functionName, isSafe);
     }
 
 }
