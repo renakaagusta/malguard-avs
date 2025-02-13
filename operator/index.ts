@@ -1,15 +1,14 @@
 import { ethers } from 'ethers'
 import * as dotenv from 'dotenv'
-import OpenAI from "openai";
-import { getContractSourceCode } from './scan';
+import OpenAI from 'openai'
+import { getContractSourceCode } from './scan'
 const fs = require('fs')
 const path = require('path')
 dotenv.config()
 
-
 const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+  apiKey: process.env.OPENAI_API_KEY
+})
 
 // Check if the process.env object is empty
 if (!Object.keys(process.env).length) {
@@ -22,7 +21,7 @@ const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider)
 /// TODO: Hack
 // let chainId = 31337;
 // arbitrum sepolia chain id
-let chainId = 421614;
+let chainId = 421614
 // let chainId = 911867;
 
 const avsDeploymentData = JSON.parse(
@@ -52,9 +51,8 @@ interface Task {
   value: string
 }
 
-
 const getFunctionNameByData = async (data: string) => {
-    return data.slice(0,10);
+  return data.slice(0, 10)
 }
 
 const signAndRespondToTask = async (taskIndex: number, task: Task) => {
@@ -114,24 +112,24 @@ const monitorNewTasks = async () => {
 }
 
 const contractMessageBuilder = async (contract: string) => {
+  let contractCode = ``
+  try {
+    const sourceCode = await getContractSourceCode(contract)
+    contractCode = sourceCode.isVerified ? sourceCode.sourceCode : ``
     return `
-    please Analyze Contract source code for potential phishing indicators. Here are the details of the contract you need to analyze:
-    <contract_source_code>
-    ${contract}
-    </contract_source_code>
+      please Analyze Contract source code for potential phishing indicators. Here are the details of the contract you need to analyze:
+      <contract_source_code>
+      ${contract}
+      </contract_source_code>
     `
+  } catch (err: any) {
+    console.log(`Error : ${err.message}`)
+    return ``
+  }
 }
 
 const messageBuilder = async (data: string, task: Task) => {
-    let contract = ``
-    try {
-        const sourceCode = await getContractSourceCode(task.to)
-        contract = sourceCode.isVerified ? sourceCode.sourceCode : ``
-    }catch (err: any){
-        console.log(`Error : ${err.message}`)
-    }
-
-    return `
+  return `
 You are an expert Ethereum security analyst with extensive knowledge of phishing transaction patterns and Solidity code. Your task is to analyze a given transaction and determine if it's potentially a phishing attempt or safe.
 
 Here are the details of the transaction you need to analyze:
@@ -190,13 +188,13 @@ const getAiAnalysis = async (data: string, task: Task) => {
           ]
         },
         {
-            role: 'user',
-            content: [
-              {
-                type: 'text',
-                text: await messageBuilder(data, task)
-              }
-            ]
+          role: 'user',
+          content: [
+            {
+              type: 'text',
+              text: await messageBuilder(data, task)
+            }
+          ]
         }
       ],
       response_format: {
@@ -225,14 +223,16 @@ const getAiAnalysis = async (data: string, task: Task) => {
       max_completion_tokens: 2048,
       top_p: 1,
       frequency_penalty: 0,
-      presence_penalty: 0,
+      presence_penalty: 0
       // // @ts-expect-error Venice.ai paramters are unique to Venice.
       // this param is for venice.ai, currently we just mock it use other agent.
       // venice_parameters: {
       //   include_venice_system_prompt: false,
       // },
     })
-    const responseJSON = JSON.parse(response.choices[0].message.content ?? `{ safe: false, cause: 'Analysis not available' }`);
+    const responseJSON = JSON.parse(
+      response.choices[0].message.content ?? `{ safe: false, cause: 'Analysis not available' }`
+    )
     isSafe = responseJSON.safe
     analysis = responseJSON.cause
   } catch (err: any) {
