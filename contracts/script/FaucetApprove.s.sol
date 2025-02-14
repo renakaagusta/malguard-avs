@@ -2,7 +2,7 @@
 pragma solidity ^0.8.26;
 
 import "forge-std/Script.sol";
-import "safe-contracts/contracts/Safe.sol";
+import "safe-smart-account/contracts/Safe.sol";
 
 interface IFaucet {
     // Events

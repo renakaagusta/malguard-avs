@@ -102,7 +102,8 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         uint32 referenceTaskIndex,
         bytes memory signature,
         bool isSafe,
-        bytes4 functionName
+        bytes4 functionName,
+        bytes memory cause
     ) external {
         // check that the task is valid, hasn't been responsed yet, and is being responded in time
         require(
@@ -132,7 +133,7 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
 
         // emitting event
         emit TaskResponded(referenceTaskIndex, task, msg.sender);
-        emit Transaction(referenceTaskIndex, task.from, task.to , task.value, task.data, functionName, isSafe);
+        emit Transaction(referenceTaskIndex, task.from, task.to , task.value, task.data, functionName, cause, isSafe);
     }
 
 }

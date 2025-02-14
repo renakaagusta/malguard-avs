@@ -449,6 +449,11 @@
         "name": "functionName",
         "type": "bytes4",
         "internalType": "bytes4"
+      },
+      {
+        "name": "cause",
+        "type": "bytes",
+        "internalType": "bytes"
       }
     ],
     "outputs": [],
@@ -759,6 +764,12 @@
         "type": "bytes4",
         "indexed": false,
         "internalType": "bytes4"
+      },
+      {
+        "name": "cause",
+        "type": "bytes",
+        "indexed": false,
+        "internalType": "bytes"
       },
       {
         "name": "status",

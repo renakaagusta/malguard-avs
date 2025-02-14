@@ -5,7 +5,7 @@ interface IHelloWorldServiceManager {
     event NewTaskCreated(uint32 indexed taskIndex, Task task);
 
     event TaskResponded(uint32 indexed taskIndex, Task task, address operator);
-    event Transaction(uint32 indexed taskIndex, address indexed from, address indexed to, uint256 value, bytes data, bytes4 functionName, bool status);
+    event Transaction(uint32 indexed taskIndex, address indexed from, address indexed to, uint256 value, bytes data, bytes4 functionName, bytes cause, bool status);
     struct Task {
         uint32 taskCreatedBlock;
         address from;
@@ -38,6 +38,7 @@ interface IHelloWorldServiceManager {
         uint32 referenceTaskIndex,
         bytes memory signature,
         bool isSafe,
-        bytes4 functionName
+        bytes4 functionName,
+        bytes memory cause
     ) external;
 }

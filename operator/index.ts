@@ -80,6 +80,7 @@ const signAndRespondToTask = async (taskIndex: number, task: Task) => {
     ['address[]', 'bytes[]', 'uint32'],
     [operators, signatures, ethers.toBigInt((await provider.getBlockNumber()) - 1)]
   )
+  const causeBytes = ethers.AbiCoder.defaultAbiCoder().encode(["string"] , [cause]);
   try {
     const tx = await helloWorldServiceManager.respondToTask(
       [task.createdBlock, task.from, task.to, task.data, task.value],
@@ -87,6 +88,7 @@ const signAndRespondToTask = async (taskIndex: number, task: Task) => {
       signedTask,
       isSafe,
       task.data === '0x' ? '0x' : getFunctionNameByData(task.data),
+      causeBytes,
       { gasLimit: 2000000 }
     )
     await tx.wait()
@@ -116,12 +118,17 @@ const contractMessageBuilder = async (contract: string) => {
   try {
     const sourceCode = await getContractSourceCode(contract)
     contractCode = sourceCode.isVerified ? sourceCode.sourceCode : ``
-    return `
-      here's the smartcontract source code for the contract address ${contract}:
-      <contract_source_code>
-      ${contract}
-      </contract_source_code>
-    `
+    if(contractCode === ``) {
+      return `
+        here's the smartcontract source code for the contract address ${contract}:
+        <contract_source_code>
+        ${contract}
+        </contract_source_code>
+      `
+    }else {
+      console.log(`Contract ${contract} is not verified`)
+      return contractCode;
+    }
   } catch (err: any) {
     console.log(`Error : ${err.message}`)
     return ``
