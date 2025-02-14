@@ -1,7 +1,7 @@
 
 export async function getContractSourceCode(contractAddress: string) {
     // Arbiscan API endpoint
-    const baseUrl = 'https://api.arbiscan.io/api';
+    const baseUrl = 'https://api-sepolia.etherscan.io/api';
         
     // Build URL with query parameters
     const url = new URL(baseUrl);
