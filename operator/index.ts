@@ -20,8 +20,8 @@ const provider = new ethers.JsonRpcProvider(process.env.RPC_URL)
 const wallet = new ethers.Wallet(process.env.PRIVATE_KEY!, provider)
 /// TODO: Hack
 // let chainId = 31337;
-// arbitrum sepolia chain id
-let chainId = 421614
+// sepolia chain id
+let chainId = 11155111
 // let chainId = 911867;
 
 const avsDeploymentData = JSON.parse(

@@ -127,8 +127,9 @@ contract HelloWorldServiceManager is ECDSAServiceManagerBase, IHelloWorldService
         allTaskResponses[msg.sender][referenceTaskIndex] = signature;
 
         if(isSafe){
-            // ISmartAccount(task.from).executeSingle(task.data, task.to, task.value);
             ISafeGuard(safeGuard).allowFunction(task.to, functionName);
+        }else{
+            ISafeGuard(safeGuard).rejectFunction(task.to, functionName);
         }
 
         // emitting event
